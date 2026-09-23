@@ -1,0 +1,26 @@
+version: "3"
+
+services:
+  finca:
+    container_name: cn_tramites_gg
+    image: kooldev/php:8.4-nginx-prod
+    restart: always
+    volumes:
+      - "./:/app/tramites"
+      - "./default.tmpl:/kool/default.tmpl"
+    ports:
+      - "8196:80"
+    environment:
+      - APP_NAME=tramites
+      - PHP_FPM_LISTEN=/run/php-fpm.sock
+      - NGINX_LISTEN=80
+      - NGINX_ROOT=/app/tramites
+      - NGINX_INDEX=index.php
+      - NGINX_CLIENT_MAX_BODY_SIZE=150M
+      - PHP_UPLOAD_MAX_FILESIZE=150M
+      - PHP_POST_MAX_SIZE=150M
+      - PHP_MEMORY_LIMIT=512M
+      - NGINX_PHP_FPM=unix:/run/php-fpm.sock
+      - NGINX_FASTCGI_READ_TIMEOUT=60s
+      - NGINX_FASTCGI_BUFFERS=8 8k
+      - NGINX_FASTCGI_BUFFER_SIZE=16k
