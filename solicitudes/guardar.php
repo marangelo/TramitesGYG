@@ -38,7 +38,7 @@ $distribuidores = array_values(array_unique(array_filter(array_map('intval', $di
 if (!$id_direccion_anrs || !$id_tipo_licencia || !$id_tipo_tramite || !$id_representante_legal || !$id_titular) {
     $error = 'Todos los campos con * son obligatorios.';
     $redirect = $es_edicion ? "editar.php?id=$id" : "crear.php";
-    header("Location: $redirect?error=" . urlencode($error));
+    header("Location: $redirect" . ($es_edicion ? '&' : '?') . "error=" . urlencode($error));
     exit;
 }
 
@@ -46,7 +46,7 @@ if (!$id_direccion_anrs || !$id_tipo_licencia || !$id_tipo_tramite || !$id_repre
 if (empty($distribuidores)) {
     $error = 'Debes seleccionar al menos un distribuidor.';
     $redirect = $es_edicion ? "editar.php?id=$id" : "crear.php";
-    header("Location: $redirect?error=" . urlencode($error));
+    header("Location: $redirect" . ($es_edicion ? '&' : '?') . "error=" . urlencode($error));
     exit;
 }
 
@@ -54,7 +54,7 @@ if (empty($distribuidores)) {
 if (($id_tipo_tramite == 2 || $id_tipo_tramite == 4) && empty($id_tipo_modificacion)) {
     $error = 'El tipo de modificación es obligatorio para este trámite.';
     $redirect = $es_edicion ? "editar.php?id=$id" : "crear.php";
-    header("Location: $redirect?error=" . urlencode($error));
+    header("Location: $redirect" . ($es_edicion ? '&' : '?') . "error=" . urlencode($error));
     exit;
 }
 
@@ -77,7 +77,7 @@ if ($id_tipo_tramite == 1) {
     if (empty($producto_propuesto['nombre']) || empty($producto_propuesto['marca']) || empty($producto_propuesto['id_fabricante'])) {
         $error = 'Nombre, marca y fabricante son obligatorios para un producto nuevo.';
         $redirect = $es_edicion ? "editar.php?id=$id" : "crear.php";
-        header("Location: $redirect?error=" . urlencode($error));
+        header("Location: $redirect" . ($es_edicion ? '&' : '?') . "error=" . urlencode($error));
         exit;
     }
     $id_producto = null;
@@ -87,7 +87,7 @@ if ($id_tipo_tramite == 1) {
     if ($id_producto <= 0) {
         $error = 'Debe seleccionar un producto existente.';
         $redirect = $es_edicion ? "editar.php?id=$id" : "crear.php";
-        header("Location: $redirect?error=" . urlencode($error));
+        header("Location: $redirect" . ($es_edicion ? '&' : '?') . "error=" . urlencode($error));
         exit;
     }
 
@@ -225,7 +225,7 @@ try {
     }
     $error = 'Error al guardar: ' . $e->getMessage();
     $redirect = $es_edicion ? "editar.php?id=$id" : "crear.php";
-    header("Location: $redirect?error=" . urlencode($error));
+    header("Location: $redirect" . ($es_edicion ? '&' : '?') . "error=" . urlencode($error));
     exit;
 }
 ?>

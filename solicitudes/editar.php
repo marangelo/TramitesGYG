@@ -49,7 +49,167 @@ if ($solicitud['id_producto']) {
 $producto_propuesto = obtenerProductoPropuesto($id);
 // Si hay propuesta, usarla; si no, usar el producto existente
 $producto_datos = $producto_propuesto ?: $producto_existente;
+// Distribuidores ya asociados a la solicitud
+$distribuidores_actuales = obtenerDistribuidoresDeSolicitud($id);
 ?>
+
+<style>
+/* ============================================================
+   ESTILOS PARA LA SECCIÓN DE DISTRIBUIDORES
+   ============================================================ */
+.seccion-distribuidores {
+    background: #f8f9fc;
+    border: 1px solid #e3e6f0;
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.seccion-distribuidores .seccion-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #e3e6f0;
+}
+
+.seccion-distribuidores .seccion-header .icono {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4e73df, #224abe);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    box-shadow: 0 2px 6px rgba(78, 115, 223, 0.35);
+}
+
+.seccion-distribuidores .seccion-header h5 {
+    margin: 0;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.seccion-distribuidores .seccion-header small {
+    display: block;
+    color: #858796;
+    font-weight: 400;
+    font-size: 0.78rem;
+}
+
+.selector-distribuidor {
+    background: #fff;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    margin-bottom: 1rem;
+}
+
+.tabla-distribuidores-wrapper {
+    background: #fff;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.tabla-distribuidores {
+    margin-bottom: 0;
+}
+
+.tabla-distribuidores thead {
+    background: linear-gradient(135deg, #4e73df, #224abe);
+    color: #fff;
+}
+
+.tabla-distribuidores thead th {
+    font-weight: 600;
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: none;
+    padding: 0.7rem 0.9rem;
+}
+
+.tabla-distribuidores tbody tr {
+    transition: background 0.2s ease;
+}
+
+.tabla-distribuidores tbody tr:hover {
+    background: #f1f4fb;
+}
+
+.tabla-distribuidores tbody td {
+    vertical-align: middle;
+    font-size: 0.9rem;
+    border-color: #eef1f7;
+}
+
+.tabla-distribuidores .badge-licencia {
+    background: #e7f1ff;
+    color: #224abe;
+    font-weight: 600;
+    padding: 0.35rem 0.6rem;
+    border-radius: 0.35rem;
+    font-size: 0.75rem;
+    display: inline-block;
+}
+
+.tabla-distribuidores .texto-ubicacion {
+    color: #6c757d;
+    font-size: 0.85rem;
+}
+
+.tabla-distribuidores .btn-eliminar-dist {
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.tabla-distribuidores .btn-eliminar-dist:hover {
+    transform: scale(1.1);
+}
+
+.contador-distribuidores {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.8rem;
+    border-radius: 2rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.contador-distribuidores.ok {
+    background: #d4edda;
+    color: #155724;
+}
+
+.contador-distribuidores.vacio {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.estado-vacio-tabla {
+    padding: 2rem 1rem;
+    text-align: center;
+    color: #a0a4b8;
+}
+
+.estado-vacio-tabla i {
+    font-size: 2rem;
+    opacity: 0.4;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+</style>
 
 <h2><i class="fas fa-edit"></i> <?php echo $titulo; ?></h2>
 
@@ -228,6 +388,70 @@ $producto_datos = $producto_propuesto ?: $producto_existente;
                 </div>
             </div>
 
+            <!-- ============================================================ -->
+            <!-- SECCIÓN DISTRIBUIDORES (ESTILIZADA) - ANTES DE DOCUMENTOS    -->
+            <!-- ============================================================ -->
+            <div class="seccion-distribuidores">
+                <div class="seccion-header">
+                    <div class="icono"><i class="fas fa-truck"></i></div>
+                    <div class="flex-grow-1">
+                        <h5>Distribuidores Asociados <span class="text-danger">*</span></h5>
+                        <small>Selecciona los distribuidores vinculados a la combinación de dirección y tipo de licencia.</small>
+                    </div>
+                    <div>
+                        <span id="contador_distribuidores" class="contador-distribuidores vacio">
+                            <i class="fas fa-list"></i> 0 agregados
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Selector -->
+                <div class="selector-distribuidor">
+                    <div class="row g-2 align-items-end">
+                        <div class="col-md-9">
+                            <label for="select_distribuidor_disponible" class="form-label small mb-1 text-muted">
+                                Distribuidor disponible
+                            </label>
+                            <select class="form-select" id="select_distribuidor_disponible">
+                                <option value="">Primero selecciona dirección y tipo de licencia</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="button" class="btn btn-primary w-100" id="btn_agregar_distribuidor">
+                                <i class="fas fa-plus-circle"></i> Agregar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla -->
+                <div class="tabla-distribuidores-wrapper">
+                    <table class="table tabla-distribuidores mb-0">
+                        <thead>
+                            <tr>
+                                <th style="width:35%;"><i class="fas fa-building me-1"></i> Nombre</th>
+                                <th style="width:22%;"><i class="fas fa-id-card me-1"></i> N° Licencia</th>
+                                <th style="width:33%;"><i class="fas fa-map-marker-alt me-1"></i> Ubicación</th>
+                                <th style="width:10%;" class="text-center"><i class="fas fa-cog"></i></th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody_distribuidores">
+                            <tr id="fila_vacia_distribuidores">
+                                <td colspan="4" class="estado-vacio-tabla">
+                                    <i class="fas fa-truck-moving"></i>
+                                    Aún no has agregado ningún distribuidor.
+                                    <br>
+                                    <small>Usa el selector de arriba para agregarlos.</small>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Inputs hidden generados dinámicamente -->
+                <div id="hidden_distribuidores"></div>
+            </div>
+
             <!-- Documentos Requeridos -->
             <hr>
             <h5><i class="fas fa-file-alt"></i> Documentos Requeridos</h5>
@@ -372,6 +596,187 @@ function cargarDocumentosRequeridos() {
             container.innerHTML = '<div class="col-12 text-danger">Error al cargar documentos.</div>';
         });
 }
+
+// ============================================================
+// 5.1 Distribuidores: select + tabla dinámica
+// ============================================================
+let distribuidoresDisponibles = [];
+
+function cargarDistribuidoresDisponibles() {
+    const idDireccion = document.getElementById('id_direccion_anrs').value;
+    const idTipoLicencia = document.getElementById('id_tipo_licencia').value;
+    const select = document.getElementById('select_distribuidor_disponible');
+
+    select.innerHTML = '<option value="">Cargando...</option>';
+    distribuidoresDisponibles = [];
+
+    if (!idDireccion || !idTipoLicencia) {
+        select.innerHTML = '<option value="">Primero selecciona dirección y tipo de licencia</option>';
+        return;
+    }
+
+    fetch('<?php echo BASE_URL; ?>ajax_distribuidores.php?id_direccion_anrs=' + idDireccion + '&id_tipo_licencia=' + idTipoLicencia)
+        .then(response => response.json())
+        .then(data => {
+            distribuidoresDisponibles = data;
+            if (data.length === 0) {
+                select.innerHTML = '<option value="">No hay distribuidores para esta combinación</option>';
+                return;
+            }
+            select.innerHTML = '<option value="">Seleccionar distribuidor...</option>';
+            data.forEach(d => {
+                const infoExtra = [];
+                if (d.numero_licencia) infoExtra.push('Lic. ' + d.numero_licencia);
+
+                const option = document.createElement('option');
+                option.value = d.id_distribuidor;
+                option.textContent = d.nombre + (infoExtra.length ? ' — ' + infoExtra.join(' · ') : '');
+                select.appendChild(option);
+            });
+        })
+        .catch(() => {
+            select.innerHTML = '<option value="">Error al cargar distribuidores</option>';
+        });
+}
+
+// Agregar distribuidor
+document.getElementById('btn_agregar_distribuidor').addEventListener('click', function() {
+    const select = document.getElementById('select_distribuidor_disponible');
+    const idDist = parseInt(select.value);
+
+    if (!idDist) {
+        alert('Selecciona un distribuidor del listado.');
+        return;
+    }
+
+    if (document.querySelector(`#tbody_distribuidores tr[data-id="${idDist}"]`)) {
+        alert('Este distribuidor ya está en la lista.');
+        return;
+    }
+
+    const dist = distribuidoresDisponibles.find(d => parseInt(d.id_distribuidor) === idDist);
+    if (!dist) return;
+
+    agregarFilaDistribuidor(dist);
+    select.value = '';
+    actualizarTablaDistribuidores();
+});
+
+function agregarFilaDistribuidor(dist) {
+    const tbody = document.getElementById('tbody_distribuidores');
+    const filaVacia = document.getElementById('fila_vacia_distribuidores');
+    if (filaVacia) filaVacia.remove();
+
+    const ubicacion = [];
+    if (dist.departamento_nombre) ubicacion.push(dist.departamento_nombre);
+    if (dist.municipio_nombre) ubicacion.push(dist.municipio_nombre);
+
+    const licencia = dist.numero_licencia 
+        ? `<span class="badge-licencia">${escapeHtml(dist.numero_licencia)}</span>` 
+        : '<span class="text-muted">—</span>';
+
+    const tr = document.createElement('tr');
+    tr.setAttribute('data-id', dist.id_distribuidor);
+    tr.innerHTML = `
+        <td><strong>${escapeHtml(dist.nombre)}</strong></td>
+        <td>${licencia}</td>
+        <td><span class="texto-ubicacion"><i class="fas fa-map-marker-alt text-muted me-1"></i>${escapeHtml(ubicacion.join(', ') || '—')}</span></td>
+        <td class="text-center">
+            <button type="button" class="btn btn-sm btn-danger btn-eliminar-dist" title="Eliminar">
+                <i class="fas fa-times"></i>
+            </button>
+        </td>
+    `;
+    tbody.appendChild(tr);
+}
+
+document.getElementById('tbody_distribuidores').addEventListener('click', function(e) {
+    const btn = e.target.closest('.btn-eliminar-dist');
+    if (!btn) return;
+    const tr = btn.closest('tr');
+    tr.remove();
+    actualizarTablaDistribuidores();
+});
+
+function actualizarTablaDistribuidores() {
+    const tbody = document.getElementById('tbody_distribuidores');
+    const filas = tbody.querySelectorAll('tr[data-id]');
+    const containerHidden = document.getElementById('hidden_distribuidores');
+    const contador = document.getElementById('contador_distribuidores');
+
+    // Inputs hidden
+    containerHidden.innerHTML = '';
+    filas.forEach(tr => {
+        const id = tr.getAttribute('data-id');
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'distribuidores[]';
+        input.value = id;
+        containerHidden.appendChild(input);
+    });
+
+    // Fila vacía si aplica
+    if (filas.length === 0 && !document.getElementById('fila_vacia_distribuidores')) {
+        const trVacio = document.createElement('tr');
+        trVacio.id = 'fila_vacia_distribuidores';
+        trVacio.innerHTML = `
+            <td colspan="4" class="estado-vacio-tabla">
+                <i class="fas fa-truck-moving"></i>
+                Aún no has agregado ningún distribuidor.
+                <br>
+                <small>Usa el selector de arriba para agregarlos.</small>
+            </td>
+        `;
+        tbody.appendChild(trVacio);
+    }
+
+    // Contador
+    if (filas.length === 0) {
+        contador.className = 'contador-distribuidores vacio';
+        contador.innerHTML = '<i class="fas fa-list"></i> 0 agregados';
+    } else {
+        contador.className = 'contador-distribuidores ok';
+        contador.innerHTML = `<i class="fas fa-check-circle"></i> ${filas.length} agregado(s)`;
+    }
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text ?? '';
+    return div.innerHTML;
+}
+
+// Disparadores
+document.getElementById('id_tipo_licencia').addEventListener('change', function() {
+    cargarDistribuidoresDisponibles();
+});
+
+document.getElementById('id_direccion_anrs').addEventListener('change', function() {
+    document.getElementById('select_distribuidor_disponible').innerHTML = '<option value="">Primero selecciona dirección y tipo de licencia</option>';
+    document.getElementById('tbody_distribuidores').innerHTML = '';
+    document.getElementById('hidden_distribuidores').innerHTML = '';
+    actualizarTablaDistribuidores();
+});
+
+// ============================================================
+// 5.2 Validar en submit
+// ============================================================
+document.getElementById('formSolicitud').addEventListener('submit', function(e) {
+    const filas = document.querySelectorAll('#tbody_distribuidores tr[data-id]');
+    if (filas.length === 0) {
+        e.preventDefault();
+        alert('Debes agregar al menos un distribuidor.');
+        return false;
+    }
+});
+
+// Precargar los distribuidores ya asociados a la solicitud
+document.addEventListener('DOMContentLoaded', function() {
+    const distribuidoresActuales = <?php echo json_encode($distribuidores_actuales); ?>;
+    distribuidoresActuales.forEach(agregarFilaDistribuidor);
+    actualizarTablaDistribuidores();
+    cargarDistribuidoresDisponibles();
+});
 </script>
 
 <?php include '../includes/footer.php'; ?>
